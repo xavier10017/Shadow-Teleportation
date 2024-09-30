@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class ShadowTeleport : MonoBehaviour
 {
-
     public Transform player;
     public LayerMask shadowLayer;
     public float detectionRadius = 5f;
@@ -13,14 +12,35 @@ public class ShadowTeleport : MonoBehaviour
     private Collider[] shadows;
     private Transform nearestShadow;
 
+    private int selectedShadowIndex = 0; // Index para escolher sombras
+
     void Update()
     {
         // Se o jogador estiver dentro de uma sombra, ele pode teleportar
         if (isInShadow)
         {
-            if (Input.GetKeyDown(KeyCode.T)) // Supondo que "T" seja a tecla para teleportar
+            // Detecta sombras ao redor do player
+            shadows = Physics.OverlapSphere(player.position, detectionRadius, shadowLayer);
+
+            if (shadows.Length > 1) // Há mais de uma sombra para escolher
             {
-                TeleportToNearestShadow();
+                // Cicla pelas sombras usando teclas de seta (ou poderia usar scroll do mouse)
+                if (Input.GetKeyDown(KeyCode.LeftArrow))
+                {
+                    selectedShadowIndex = (selectedShadowIndex - 1 + shadows.Length) % shadows.Length;
+                    HighlightSelectedShadow();
+                }
+                else if (Input.GetKeyDown(KeyCode.RightArrow))
+                {
+                    selectedShadowIndex = (selectedShadowIndex + 1) % shadows.Length;
+                    HighlightSelectedShadow();
+                }
+
+                // Se o jogador pressionar "T", ele se teleporta para a sombra selecionada
+                if (Input.GetKeyDown(KeyCode.T))
+                {
+                    TeleportToSelectedShadow();
+                }
             }
         }
     }
@@ -43,42 +63,33 @@ public class ShadowTeleport : MonoBehaviour
         }
     }
 
-    void TeleportToNearestShadow()
+    void HighlightSelectedShadow()
     {
-        shadows = Physics.OverlapSphere(player.position, detectionRadius, shadowLayer);
-
-        if (shadows.Length > 1) // Ignorar a sombra onde o jogador já está
+        // Aqui você pode modificar a aparência da sombra selecionada
+        for (int i = 0; i < shadows.Length; i++)
         {
-            float closestDistance = Mathf.Infinity;
-            Transform closestShadow = null;
+            Renderer shadowRenderer = shadows[i].GetComponent<Renderer>();
 
-            foreach (Collider shadow in shadows)
+            if (i == selectedShadowIndex)
             {
-                // Evitar a sombra atual
-                if (shadow.transform == nearestShadow)
-                    continue;
-
-                float distanceToShadow = Vector3.Distance(player.position, shadow.transform.position);
-                if (distanceToShadow < closestDistance)
-                {
-                    closestDistance = distanceToShadow;
-                    closestShadow = shadow.transform;
-                }
+                shadowRenderer.material.color = Color.green; // Muda a cor da sombra selecionada para verde
             }
-
-            if (closestShadow != null)
+            else
             {
-                // Atualiza a sombra mais próxima e faz o teleporte
-                nearestShadow = closestShadow;
-                Vector3 targetPosition = nearestShadow.position;
-                targetPosition.y += 1f; // Ajusta a altura se necessário
-
-                player.position = targetPosition;
-                Debug.Log("Teleportado para uma nova sombra");
+                shadowRenderer.material.color = Color.black; // Restaura a cor das outras sombras para preto
             }
         }
     }
 
+    void TeleportToSelectedShadow()
+    {
+        nearestShadow = shadows[selectedShadowIndex].transform;
+        Vector3 targetPosition = nearestShadow.position;
+        targetPosition.y += 1f; // Ajusta a altura se necessário
+
+        player.position = targetPosition;
+        Debug.Log("Teleportado para a sombra selecionada");
+    }
 
     private void OnDrawGizmos()
     {
@@ -88,5 +99,4 @@ public class ShadowTeleport : MonoBehaviour
             Gizmos.DrawWireSphere(player.position, detectionRadius); // Desenha um raio ao redor do player
         }
     }
-
 }
