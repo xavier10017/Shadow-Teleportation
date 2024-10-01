@@ -2,21 +2,24 @@ using UnityEngine;
 
 public class SixDirectionMovement : MonoBehaviour
 {
-    public float moveSpeed = 5f; // Velocidade do movimento
-    private Rigidbody rb;
+    public float moveSpeed = 5f; // Velocidade de movimento
+    public float gravity = 9.8f; // Gravidade simulada
+    private CharacterController controller;
+    private Vector3 moveDirection;
 
     void Start()
     {
-        rb = GetComponent<Rigidbody>();
+        // Obtém o componente CharacterController
+        controller = GetComponent<CharacterController>();
     }
 
     void Update()
     {
-        // Obtém as entradas no eixo horizontal e vertical
+        // Obtém as entradas de movimento no plano horizontal (X e Z)
         float moveHorizontal = Input.GetAxis("Horizontal");
         float moveVertical = Input.GetAxis("Vertical");
 
-        // Para cima e para baixo (usando as teclas Q e E como padrão)
+        // Para cima e para baixo (usando as teclas Q e E)
         float moveUpDown = 0f;
         if (Input.GetKey(KeyCode.Q))
         {
@@ -27,10 +30,19 @@ public class SixDirectionMovement : MonoBehaviour
             moveUpDown = -1f; // Movimenta para baixo
         }
 
-        // Vetor de movimento
-        Vector3 movement = new Vector3(moveHorizontal, moveUpDown, moveVertical);
+        // Se o personagem está no chão, define a direção de movimento
+        if (controller.isGrounded)
+        {
+            moveDirection = new Vector3(moveHorizontal, moveUpDown, moveVertical);
+            moveDirection = transform.TransformDirection(moveDirection);
+            moveDirection *= moveSpeed;
+        }
 
-        // Aplica a movimentação ao Rigidbody
-        rb.MovePosition(transform.position + movement * moveSpeed * Time.deltaTime);
+        // Aplica gravidade constante
+        moveDirection.y -= gravity * Time.deltaTime;
+
+        // Move o CharacterController
+        controller.Move(moveDirection * Time.deltaTime);
     }
 }
+
