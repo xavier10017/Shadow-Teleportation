@@ -34,15 +34,19 @@ public class NPC : MonoBehaviour
         // Pega a posição do ponto de patrulha atual
         Transform targetPatrolPoint = patrolPoints[currentPatrolIndex];
 
+        // Mantém a posição Y do NPC
+        Vector3 targetPosition = new Vector3(targetPatrolPoint.position.x, transform.position.y, targetPatrolPoint.position.z);
+
         // Move o NPC em direção ao ponto de patrulha
-        transform.position = Vector3.MoveTowards(transform.position, targetPatrolPoint.position, moveSpeed * Time.deltaTime);
+        transform.position = Vector3.MoveTowards(transform.position, targetPosition, moveSpeed * Time.deltaTime);
 
         // Verifica se o NPC chegou ao ponto de patrulha
-        if (Vector3.Distance(transform.position, targetPatrolPoint.position) <= stoppingDistance)
+        if (Vector3.Distance(transform.position, targetPosition) <= stoppingDistance)
         {
             // Passa para o próximo ponto de patrulha
             currentPatrolIndex = (currentPatrolIndex + 1) % patrolPoints.Count;
         }
     }
+
 }
 
