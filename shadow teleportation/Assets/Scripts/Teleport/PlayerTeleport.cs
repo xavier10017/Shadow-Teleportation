@@ -3,7 +3,7 @@ using UnityEngine;
 public class PlayerTeleport : MonoBehaviour
 {
     private TeleportManager teleportManager; // Referência ao TeleportManager
-    private Transform playerTransform; // Referência ao transform do jogador
+    private CharacterController characterController; // Referência ao Character Controller do jogador
     public float teleportHeightOffset = 1.0f; // Ajuste de altura para evitar entrar no chão
     public LayerMask teleportLayerMask; // Layer dos objetos de teleporte
     public LayerMask obstacleLayerMask; // Layer dos obstáculos que devem ser ignorados pelo Raycast
@@ -14,13 +14,12 @@ public class PlayerTeleport : MonoBehaviour
 
     void Start()
     {
-        playerTransform = transform; // Referência ao transform do jogador
+        characterController = GetComponent<CharacterController>(); // Referência ao Character Controller do jogador
         teleportManager = FindObjectOfType<TeleportManager>(); // Pegar a referência do TeleportManager na cena
     }
 
     void Update()
     {
-        // Detectar clique do botão esquerdo do mouse
         if (Input.GetMouseButtonDown(0))
         {
             DetectTeleportClick(); // Detectar se o jogador clicou em um ponto de teleporte
@@ -35,17 +34,14 @@ public class PlayerTeleport : MonoBehaviour
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
 
-        // Desenhar a linha do Raycast na cena
-        Debug.DrawLine(ray.origin, ray.direction * 100, Color.red, 2.0f); // Desenha a linha do Raycast em vermelho por 2 segundos
+        Debug.DrawLine(ray.origin, ray.direction * 100, Color.red, 2.0f);
 
-        // Verificar se o Raycast atinge um obstáculo primeiro
         if (Physics.Raycast(ray, out hit, Mathf.Infinity, obstacleLayerMask))
         {
             Debug.Log("Raycast atingiu um obstáculo, não pode teleportar.");
-            return; // Retorna e não faz nada se houver um obstáculo
+            return;
         }
 
-        // Verificar se o Raycast atinge um ponto de teleporte
         if (Physics.Raycast(ray, out hit, Mathf.Infinity, teleportLayerMask))
         {
             Transform clickedObject = hit.transform;
@@ -63,7 +59,10 @@ public class PlayerTeleport : MonoBehaviour
         {
             Vector3 targetPosition = teleportPoint.position;
             targetPosition.y += teleportHeightOffset;
-            playerTransform.position = targetPosition;
+
+            // Usar o método Move do CharacterController para o teleporte
+            Vector3 teleportVector = targetPosition - characterController.transform.position;
+            characterController.Move(teleportVector);
         }
         else
         {
@@ -76,28 +75,23 @@ public class PlayerTeleport : MonoBehaviour
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
 
-        // Verificar se o Raycast atinge um ponto de teleporte
         if (Physics.Raycast(ray, out hit, Mathf.Infinity, teleportLayerMask))
         {
             Transform hitObject = hit.transform;
 
-            // Se um ponto de teleporte for detectado, trocar o material
             if (lastHighlightedObject != hitObject)
             {
-                // Restaurar o material do último objeto destacado
                 if (lastHighlightedObject != null)
                 {
                     SetObjectMaterial(lastHighlightedObject, defaultMaterial);
                 }
 
-                // Trocar o material do novo objeto destacado
                 SetObjectMaterial(hitObject, highlightMaterial);
                 lastHighlightedObject = hitObject;
             }
         }
         else
         {
-            // Se não houver um ponto de teleporte sob o mouse, restaurar o último material destacado
             if (lastHighlightedObject != null)
             {
                 SetObjectMaterial(lastHighlightedObject, defaultMaterial);
@@ -115,3 +109,4 @@ public class PlayerTeleport : MonoBehaviour
         }
     }
 }
+

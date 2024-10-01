@@ -1,10 +1,12 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class NPC : MonoBehaviour
 {
-    public Transform[] patrolPoints;  // Pontos de patrulha
-    public float speed = 2.0f;        // Velocidade de movimento
-    private int currentPointIndex = 0; // Índice do ponto atual de patrulha
+    private List<Transform> patrolPoints;
+    private int currentPatrolIndex = 0;
+    public float moveSpeed = 2.0f;
+    public float stoppingDistance = 0.2f; // Distância mínima para considerar que chegou ao ponto de patrulha
 
     void Start()
     {
@@ -15,17 +17,32 @@ public class NPC : MonoBehaviour
         }
     }
 
+    public void AssignPatrolPoints(List<Transform> points)
+    {
+        patrolPoints = points;
+    }
+
     public void Move()
     {
-        if (patrolPoints.Length == 0) return;
-
-        // Mover NPC para o ponto atual de patrulha
-        transform.position = Vector3.MoveTowards(transform.position, patrolPoints[currentPointIndex].position, speed * Time.deltaTime);
-
-        // Se o NPC chegou no ponto atual, move para o próximo ponto
-        if (Vector3.Distance(transform.position, patrolPoints[currentPointIndex].position) < 0.1f)
+        // Verifica se os pontos de patrulha foram definidos
+        if (patrolPoints == null || patrolPoints.Count == 0)
         {
-            currentPointIndex = (currentPointIndex + 1) % patrolPoints.Length;  // Loop nos pontos
+            Debug.LogWarning("No patrol points assigned!");
+            return;
+        }
+
+        // Pega a posição do ponto de patrulha atual
+        Transform targetPatrolPoint = patrolPoints[currentPatrolIndex];
+
+        // Move o NPC em direção ao ponto de patrulha
+        transform.position = Vector3.MoveTowards(transform.position, targetPatrolPoint.position, moveSpeed * Time.deltaTime);
+
+        // Verifica se o NPC chegou ao ponto de patrulha
+        if (Vector3.Distance(transform.position, targetPatrolPoint.position) <= stoppingDistance)
+        {
+            // Passa para o próximo ponto de patrulha
+            currentPatrolIndex = (currentPatrolIndex + 1) % patrolPoints.Count;
         }
     }
 }
+
